@@ -108,16 +108,72 @@ class Profile():
         profile_button.pack(pady = 10)
         self.after(100, lambda: self.sidebar.configure(height = self.winfo_height()))
 
-    def toggle_sidebar(self):
-        if self.sidebar_open:
-            self.animate_sidebar_close()
-        else:
-            self.animate_sidebar_open()
+        def toggle_sidebar(self):
+            if self.sidebar_open:
+                self.animate_sidebar_close()
+            else:
+                self.animate_sidebar_open()
 
-    def animate_sidebar_open(self, height = 0):
-        max_height = self.winfo_height()
-        if max_height <= 1:
-            self.after(50,lambda: self.)
+        def animate_sidebar_open(self, height = 0):
+            max_height = self.winfo_height()
+            if max_height <= 1:
+                self.after(50,lambda: self.animate_sidebar_open(height))
+                return
+            if height < max_height:
+                height += 25
+                if height > max_height:
+                    height = max_height
+                self.sidebar.configure(height = height, width = 90)
+                self.after(10,lambda: self.animate_sidebar_open(height))
+            else:
+                self.sidebar_open = True
+
+        def animate_sidebar_close(self, height = None):
+            max_height = self.winfo_height()
+            if max_height <= 1:
+                return
+            if height is None:
+                height = max_height
+
+            if height > 0:
+                height -= 25
+                if height < 0:
+                    height = 0
+                width = int(90*(height/max_height))
+                if width < 1:
+                    width = 1
+                self.sidebar.configure(width = width, height = height)
+                self.after(10,lambda: self.animate_sidebar_close(height))
+
+            else:
+                self.sidebar.configure(width = 1, height = 1)
+                self.sidebar_open()
+
+    def profile_area(self):
+        self.main = ctk.CTkFrame(self, fg_color = "#FFFFFF")
+        self.main.pack(side = 'left', fill = 'both', expand = True)
+
+        top_bar = ctk.CTkFrame(self.main, fg_color ="#F65C84", height = 90)
+        top_bar.pack(fill = 'x')
+        top_bar.pack_propagate(False)
+        title = ctk.CTkLabel(top_bar, text = "Profile", font = ("Arial", 25, 'bold'), text_color = '#FFFFFF')
+        title.pack(side = 'left', padx = 35)
+        content = ctk.CTkFrame(self.main, fg_color = "#FFFFFF")
+        content.pack(fill = 'both', expand = True, padx = 40, pady = 30)
+        profile_card = ctk.CTkFrame(content, fg_color = "#FFFFFF", corner_radius = 15)
+        profile_card.pack(fill = 'x', pady = (0,25))
+        image_frame = ctk.CTkFrame(profile_card, fg_color = 'transparent')
+        image_frame.pack(pady = 25)
+        self.avatar_label = ctk.CTkLabel(image_frame, text = self.selected_avatar, font = ("Segoe UI Emoji", 80), width = 150, height = 150)
+        self.avatar_label.pack()
+        self.avatar_preview = ctk.CTkLabel(image_frame, text = self.selected_avatar, font = ("Segoe UI Emoji", 25))
+        self.avatar_preview.pack(pady = (5,0))
+        button_frame = ctk.CTkFrame(profile_card, fg_color = 'transparent')
+        button_frame.pack(pady = (0,25))
+        upload_button = ctk.CTkButton(button_frame, text = 'Upload profile picture', width = 190, height = 40, fg_color = "#000000", text_color = "#FFFFFF", hover_color = "#333333", command = self.upload_picture)
+        upload_button.pack(side='left', padx = 8)
+        avatar_button = ctk.CTkButton(button_frame, text = 'Choose Pet Avatar', width = 170, height = 40, fg_color = '#000000', hover_color = "#333333", text_color = "#FFFFFF", command = self.open_avatar_window)
+        avatar_button.pack(side='left', padx = 8)
 
     
 

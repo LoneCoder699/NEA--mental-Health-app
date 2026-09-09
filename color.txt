@@ -1,0 +1,8 @@
+background: #FDF9F3
+box color = #FFFFFF
+buttom color = #FC7F9C
+hovoer button = #F65C84
+box text = #4F6D7A
+hover box color = #3A5562
+
+⛭⌂
