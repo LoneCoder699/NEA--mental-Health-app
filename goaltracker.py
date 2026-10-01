@@ -4,6 +4,7 @@ from tkinter import messagebox
 from datetime import datetime,date,timedelta
 import json
 from pathlib import Path
+from tkcalendar import DateEntry
 
 DATA_FILE = Path.home()/'goal_tracking_data.json'
 BG = "#f5f5f5"
@@ -426,4 +427,72 @@ class GoalTrackingPage(ctk.CTk):
         card.grid_columnconfigure(1, weight = 1)
         complete_button = ctk.CTkButton(card,text = '✓' if task.get('completed') else '', width = 31, height = 31, corner_radius = 16, fg_color = '#DDDDDD', hover_color = '#BBBBBB', text_color = DARK, font = ("Arial", 15, 'bold'), command = lambda tid = task['id']:self.toggle_task(id))
         complete_button.grid(row = 0,column = 0, padx = 7, pady = 8)
-        name_label = ctk.CTkLabel(card, text = task.get('name','Task Name'))
+        name_label = ctk.CTkLabel(card, text = task.get('name','Task Name'), text_color = GRAY if task.get('completed') else WHITE, font = ("Arial", 10, 'bold'), anchor = 'w')
+        name_label.grid(row = 0, column = 1, padx=6, sticky = 'ew')
+        delete_button = ctk.CTkButton(card, text = 'X', width = 32, height = 32, fg_color = DARK, hover_color = GRAY, text_color = WHITE, font = ("Arial", 14, 'bold'), command = lambda tid = task['id']: self.delete_task(tid))
+        delete_button.grid(row = 0, column = 2, padx = 4)
+        name_label.bind('<Double-Button-1>', lambda e, tid = task['id']: self.open_task_popup(task_id = tid))
+        card.bind('<Double-Button-1>', lambda e, tid = task['id']: self.open_task_popup(task_id = tid))
+
+    def toggle_task(self, task_id):
+        for task in self.tasks:
+            if task['id'] == task_id:
+                task['completed'] = not bool(task.get('completed'))
+                today_index = date.today().weekday()
+                if task['completed']:
+                    self.week[today_index]+=1
+                elif self.week['today_index'] >0:
+                    self.week['today_index'] -=1
+                break
+
+        self.save_data()
+        self.refresh_all()
+
+
+    def delete_tasks(self, task_id):
+        task = next((t for t in self.tasks if t.get('id') == task_id), None)
+        if not task:
+            return
+        answer = messagebox.askyesno('Delete Task',f"Delete '{task.get('name','Task Name')}'?")
+        if not answer:
+            return
+        self.tasks = [t for t in self.tasks if t.get('id')!=task_id]
+        self.save_data()
+        self.refresh_all()
+
+
+    def open_task_popup(self,task_id = None, prefill_date = None):
+        if hasattr(self,'task_popup') and self.task_popup.winfo_exists():
+            self.task_popup.lift()
+            self.task_popup.focus_force
+            return
+        self.task_popup = ctk.CTkToplevel(self)
+        self.task_popup.title('Edit Task' if task_id is not None else 'Create New Task')
+        self.task_popup.geometry('440x500')
+        self.task_popup.resizable(False,False)
+        self.task_popup.configure(fg_color = PANEL)
+        self.task_popup.transient(self)
+        self.task_popup.grab_set()
+        self.task_popup.protocol('WM_DELETE_WINDOW', self.close_task_popup)
+        self.update_idletasks()
+        x = self.winfo_rootx()+(self.winfo_width()-440)//2
+        y = self.winfo_rooty()+(self.winfo_height()-500)//2
+        self.task_popup.geometry(f"+{max(x,0)}+{max(y,0)}")
+        edit_task = ctk.CTkLabel(self.task_popup,text = 'Edit Task' if task_id is not None else 'Create New Task', text_color = DARK,font = ("Arial",17,'bold'))
+        form = ctk.CTkFrame(self.task_popup, fg_color = WHITE, corner_radius=2)
+        form.pack(fill = 'both', expand = True, padx = 18, pady = (0,18))
+        form.grid_columnconfigure(0,weight = 1)
+        task_name = ctk.CTkLabel(form,text = 'Task Name', text_color = DARK, font = ("Arial",11,'bold'))
+        task_name.grid(row = 0, column = 0, padx = 18, pady = (18,5, stick = 'w'))
+        self.task_entry = ctk.CTkEntry(form, height = 38, corner_radius = 2, border_width = 1, fg_color = WHITE, text_color = DARK, placeholder_text='Enter Task Name')
+        self.task_entry.grid(row = 1, column = 0, padx = 18, sticky = 'ew')
+        deadline_label = ctk.CTkLabel(form, text = 'Deadline', text_color = DARK, font = ('Arial',11,'bold'))
+        deadline_label.grid(row = 2, column = 0, padx = 18, pady = (13,5), sticky = 'w')
+        self.popup_deadline = DateEntry(form, width = 20, date_pattern = 'dd/mm/yyyy', bg = DARK, fg_color = WHITE, border_width = 1)
+        self.popup_deadline.grid(row = 3, column = 0, padx = 18, sticky = 'w')
+        self.popup_recurring = tk.BooleanVar(value = False)
+        recur_task = ctk.CTkCheckBox(form, text = 'Recurring Task', variable = self.popup_recurring, text_color = DARK, hover_color=GRAY,checkbox_width=20, checkbox_height=20)
+        recur_task.grid(row = 4, column = 0, padx = 18, pady = 13, sticky = 'w')
+        notes_label = ctk.CTkLabel(form, text = 'Notes', text_color = DARK, font = ("Arial", 11, 'bold'))
+        notes_label.grid(row = 5, column = 0, padx = 18, pady = (2,5), sticky = 'w')
+        self.popup_notes = ctk.CTkTextbox(form, height = 85)
