@@ -495,4 +495,139 @@ class GoalTrackingPage(ctk.CTk):
         recur_task.grid(row = 4, column = 0, padx = 18, pady = 13, sticky = 'w')
         notes_label = ctk.CTkLabel(form, text = 'Notes', text_color = DARK, font = ("Arial", 11, 'bold'))
         notes_label.grid(row = 5, column = 0, padx = 18, pady = (2,5), sticky = 'w')
-        self.popup_notes = ctk.CTkTextbox(form, height = 85)
+        self.popup_notes = ctk.CTkTextbox(form, height = 85, corner_radius = 2, border_width = 1, border_color = BLACK, fg_color = WHITE, text_color = DARK)
+        self.popup_notes.grid(row = 6, column = 0, padx = 18, pady = (0,12), sticky = 'ew')
+        button_frame = ctk.CTkFrame(form, fg_color = WHITE)
+        button_frame.grid(row = 7, column = 0, padx = 18, pady = (0,18), sticky = 'ew')
+        cancel_button = ctk.CTkButton(button_frame, text = "CANCEL", height = 38, corner_radius = 2, fg_color = GRAY, hover_color = WHITE, font_color = BLACK, command =  self.close_task_popup)
+        cancel_button.grid(row = 0, column = 0, padx = (0,4), sticky = 'ew')
+        update_button = ctk.CTkButton(button_frame, text = "UPDATE" if task_id is not None else "CREATE", height = 38, corner_radius = 2, fg_color = GRAY, hover_color = WHITE, font_color = BLACK, command =  lambda: self.save_task_popup(task_id))
+        update_button.grid(row = 0, column = 1, padx = (0,4), sticky = 'ew')
+        if task_id is not None:
+            task = next(t for t in self.tasks if t.get('id') == task_id)
+            if task:
+                self.task_name.insert(0,task.get('name',''))
+                self.set_popup_deadline(task.get('deadline',date.today().isoformat()))
+                self.popup_recurring.set(bool(task.get('Recurring')))
+                self.popup_notes.insert('1.0',task.get('notes',''))
+        else:
+            self.set_popup_deadline((prefill_date or date.today()).isoformat())
+
+        self.task_name.focus_set()
+
+
+    def set_popup_deadline(self, iso_value):
+        try:
+            d = datetime.strptime(iso_value, '%Y-%m-%d').date()
+
+        except Exception:
+            d = date.today()
+
+        self.popup_deadline.set_date(d)
+
+
+    def get_popup_deadline(self):
+        raw = self.popup_deadline.get_date().isoformat()
+        try:
+            return datetime.strptime(raw,'%d/%m/%Y').date().isoformat()
+        except ValueError:
+            raise ValueError('Deadline must be in dd/mm/yyyy format')
+
+
+    def save_task_popup(self,task_id=None):
+        name = self.popup_name.get().strip()
+        if not name:
+            messagebox.showwarning('Missing Task name','Please Enter a task name',parent = self.task_popup)
+            self.popup_name.focus_set()
+            return
+        try:
+            deadline = self.get_popup_deadline()
+        except ValueError as e:
+            messagebox.showwarning('Invalid deadline',str(e), parent = self.task_popup)
+        
+        notes = self.popup_notes.get('1.0','end').strip()
+        recurring = bool(self.popup_recurring.get())
+
+        if task_id is None:
+            self.tasks.append({'id':self.next_id, 'name': name, 'deadline':deadline,'notes':notes,'recurring':recurring, 'completed':False})
+            self.next_id +=1
+        else:
+            for task in self.tasks:
+                if task.get('id') == task_id:
+                    task.update({'name': name, 'deadline':deadline,'notes':notes,'recurring':recurring})
+                    break
+
+        self.save_data()
+        self.close_task_popup()
+        self.refresh_all()
+
+
+    def close_task_popup(self):
+        if hasattr(self, 'task_popup'):
+            try:
+                if self.task_popup.winfo_exists():
+                    self.task_popup.grab_release()
+                    self.task_popup.destroy()
+            except Exception:
+                pass
+
+
+    def draw_pie(self):
+        c = self.pie_canvas
+        c.delete('all')
+        w = max(c.winfo_width(), 180)
+        h = max(c.winfo_height(), 80)
+        total = len(self.tasks)
+        completed = sum(bool(t.get('completed'))
+                        for t in self.tasks)
+        percent = (completed/total*100 if total else 0)
+
+        size = min(90,h-10)
+        x0 = max(10, (w-size)/2)
+        y0 = (h-size)/2
+        x1 = (x0+size)
+        y1 = (y0+size)
+        c.create_oval(x0,y0,x1,y1, outline = GRAY, width = 10)
+        if total:
+            c.create_arc(x0,y0,x1,y1, start = 90, extent = -360*completed/total, style = 'arc', outline = DARK, width = 10)
+        
+        cx = (x0+x1)/2
+        cy = (y0+y1)/2
+        c.create_text(cx,cy-3,text=f"{percent:.0f}%", fill = DARK, font = ("Arial", 16, 'bold'))
+        c.create_text(cx,cy+18,text=f"{completed}/{total}", fill = GRAY, font = ("Arial", 8))
+
+
+    def draw_bars(self):
+        c = self.bar_canvas()
+        c.delete('all')
+        w = max(c.winfo_width(), 280)
+        h = max(c.winfo_height(),90)
+        left = 20
+        right = 10
+        top = 5
+        bottom = 20
+        chart_h = max(20,h-top-bottom)
+        chart_w = max(50,w-left-right)
+        max_value = max(max(self.week),1)
+        for i in range(max_value+1):
+            y = top+chart_h-(i/max_value)*chart_h
+            c.create_line(left,y,w-right,y,fill = GRAY)
+
+        days = ['mon', 'tue', 'wed', 'thur', 'fri', 'sat', 'sun']
+        slot = chart_w/7
+        bar_width = slot*0.56
+        for i,value in enumerate(self.week):
+            center = left+slot*i+slot/2
+            x0 = center - bar_width/2
+            x1 = center+bar_width/2
+            y1 = top+chart_h
+            y0 = y1-(value/max_value)*chart_h
+            c.create_rectangle(x0,y0,x1,y1, fill = '#444444', outline = '#222222')
+            c.create_text(center,h-10,text = days[i], fill = DARK, font = ("Arial", 8))
+
+
+    def refresh_all(self):
+        self.refresh_tasks()
+        self.draw_schedule()
+        self.draw_pie()
+        self.draw_bars()
