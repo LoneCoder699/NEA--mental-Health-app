@@ -20,9 +20,6 @@ class MacSafeDateEntry(DateEntry):
         if sys.platform != "darwin":
             return super()._on_focus_out_cal(event)
 
-        # On macOS, Tk can report a FocusOut immediately after the calendar
-        # opens. Keep it open while the pointer is over the date field or
-        # calendar, and only close it when focus really moves elsewhere.
         if not self._top_cal.winfo_ismapped():
             return
 
@@ -52,7 +49,6 @@ class MacSafeDateEntry(DateEntry):
                 self.after_idle(self._calendar.focus_force)
                 return
         except Exception:
-            # Avoid closing the popup because of a transient macOS focus event.
             return
 
         self._top_cal.withdraw()

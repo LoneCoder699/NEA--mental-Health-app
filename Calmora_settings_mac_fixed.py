@@ -50,7 +50,6 @@ class MacSafeDatePicker(ctk.CTkFrame):
         )
         self.calendar_button.grid(row=0, column=1, padx=(5, 0))
 
-        # Pressing Return after typing a date normalises it if valid.
         self.entry.bind("<Return>", self._normalise_typed_date)
 
     def _normalise_typed_date(self, event=None):
@@ -64,7 +63,6 @@ class MacSafeDatePicker(ctk.CTkFrame):
             pass
 
     def open_calendar(self):
-        # Toggle the same popup instead of creating overlapping windows.
         if self.popup is not None and self.popup.winfo_exists():
             self.close_calendar()
             return
@@ -75,7 +73,6 @@ class MacSafeDatePicker(ctk.CTkFrame):
         self.popup.transient(self.winfo_toplevel())
         self.popup.protocol("WM_DELETE_WINDOW", self.close_calendar)
 
-        # Put the calendar directly below the field.
         self.update_idletasks()
         x = self.winfo_rootx()
         y = self.winfo_rooty() + self.winfo_height() + 4
@@ -104,7 +101,6 @@ class MacSafeDatePicker(ctk.CTkFrame):
         self.calendar.pack(padx=10, pady=10)
         self.calendar.bind("<<CalendarSelected>>", self._select_date)
 
-        # Keep the popup visible on macOS without depending on FocusOut events.
         self.popup.after(10, self.popup.lift)
         self.popup.after(20, self.calendar.focus_set)
 
