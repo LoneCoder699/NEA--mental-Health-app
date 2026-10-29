@@ -99,7 +99,7 @@ class Mood(ctk.CTk):
         self.mood_label.grid(row = 0, column = 0, columnspan = 2, pady = (8,0))
         self.build_mood_card()
         self.build_streak()
-        self.build_icons()
+        self.create_sidebar()
         self.build_bottom()
 
 
@@ -273,6 +273,18 @@ class Mood(ctk.CTk):
                 (button, text)
             )
 
+    def go_home(self):
+        self.close_dropdowns()
+        print("Navigating to Home Page")
+
+    def open_profile(self):
+        self.close_dropdowns()
+        print("Navigating to Profile Page")
+    
+    def logout(self):
+        self.close_dropdowns()
+        print("Logging out...")
+
     def toggle_left_navbar(self):
 
         if self.left_nav_expanded:
@@ -388,3 +400,195 @@ class Mood(ctk.CTk):
         no_label.pack()
         flame = tk.Canvas(streak_frame, width = 45, height = 48, bg = PANEL)
         flame.pack(pady = (4,0))
+        flame.create_polygon(22,3,34,20,37,33,29,45,15,45,7,33,10,20,17,27,smooth = True, fill = DARK, outline = DARK)
+        flame.create_oval(16,30,28,44,fill = PANEL, outline = PANEL)
+
+
+    def create_sidebar(self):
+        self.sidebar_open = True
+        self.sidebar = ctk.CTkFrame(
+            self,
+            width=90,
+            fg_color=SIDEBAR,
+            corner_radius=0
+        )
+        self.sidebar.place(
+            relx=1,
+            rely=0,
+            anchor="ne"
+        )
+
+        self.sidebar.pack_propagate(False)
+
+        self.sidebar_toggle = ctk.CTkButton(
+            self.sidebar,
+            text=">",
+            width=55,
+            height=40,
+            fg_color="transparent",
+            hover_color="#333333",
+            text_color=WHITE,
+            font=("Arial", 22),
+            corner_radius=0,
+            command=self.toggle_sidebar
+        )
+
+        self.sidebar_toggle.pack(
+            pady=(15, 20)
+        )
+    
+        logo = ctk.CTkLabel(
+            self.sidebar,
+            text="C",
+            font=("Arial", 32, "bold"),
+            text_color=WHITE
+        )
+
+        logo.pack(
+            pady=(0, 35)
+        )
+
+        home_button = ctk.CTkButton(
+            self.sidebar,
+            text="⌂",
+            width=55,
+            height=50,
+            fg_color="transparent",
+            hover_color="#333333",
+            text_color=WHITE,
+            font=("Arial", 28),
+            command=self.go_home
+        )
+
+        home_button.pack(
+            pady=10
+        )
+
+        profile_button = ctk.CTkButton(
+            self.sidebar,
+            text="◉",
+            width=55,
+            height=50,
+            fg_color="transparent",
+            hover_color="#333333",
+            text_color=WHITE,
+            font=("Arial", 24),
+            command=self.open_profile
+        )
+
+        profile_button.pack(
+            pady=10
+        )
+
+        spacer = ctk.CTkFrame(
+            self.sidebar,
+            fg_color="transparent"
+        )
+
+        spacer.pack(
+            expand=True,
+            fill="both"
+        )
+
+        self.after(
+            100,
+            self.set_sidebar_height
+        )
+
+    def set_sidebar_height(self):
+
+        height = self.winfo_height()
+
+        if height > 1:
+
+            self.sidebar.configure(
+                height=height
+            )
+
+    def toggle_sidebar(self):
+
+        if self.sidebar_open:
+
+            self.animate_sidebar_close()
+
+        else:
+
+            self.animate_sidebar_open()
+
+    def animate_sidebar_open(self, height=0):
+
+        max_height = self.winfo_height()
+
+        if max_height <= 1:
+
+            self.after(
+                50,
+                lambda: self.animate_sidebar_open(height)
+            )
+
+            return
+
+        if height < max_height:
+
+            height += 25
+
+            if height > max_height:
+                height = max_height
+
+            self.sidebar.configure(
+                height=height,
+                width=90
+            )
+
+            self.after(
+                10,
+                lambda: self.animate_sidebar_open(height)
+            )
+
+        else:
+
+            self.sidebar_open = True
+
+            self.sidebar_toggle.configure(
+                text=">"
+            )
+
+    def animate_sidebar_close(self, height=None):
+
+        max_height = self.winfo_height()
+
+        if max_height <= 1:
+            return
+
+        if height is None:
+            height = max_height
+
+        if height > 0:
+
+            height -= 25
+
+            if height < 0:
+                height = 0
+
+            self.sidebar.configure(
+                height=height,
+                width=90
+            )
+
+            self.after(
+                10,
+                lambda: self.animate_sidebar_close(height)
+            )
+
+        else:
+
+            self.sidebar.configure(
+                width=90,
+                height=1
+            )
+
+            self.sidebar_open = False
+
+            self.sidebar_toggle.configure(
+                text="<"
+            )    

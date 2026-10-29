@@ -23,6 +23,7 @@ class GoalTrackingPage(ctk.CTk):
 
     def __init__(self):
 
+
         ctk.set_appearance_mode("light")
         ctk.set_default_color_theme("blue")
 
@@ -64,6 +65,8 @@ class GoalTrackingPage(ctk.CTk):
             "<Escape>",
             lambda e: self.close_task_popup()
         )
+    
+    
     def load_data(self):
 
         if DATA_FILE.exists():
@@ -232,6 +235,7 @@ class GoalTrackingPage(ctk.CTk):
             date.today().isoformat()
         ]
 
+
     def save_data(self):
 
         try:
@@ -259,6 +263,7 @@ class GoalTrackingPage(ctk.CTk):
                 str(e)
             )
 
+
     def find_task(self, task_id):
 
         return next(
@@ -269,6 +274,7 @@ class GoalTrackingPage(ctk.CTk):
             ),
             None,
         )
+
 
     def enqueue_goal(self, task_id):
 
@@ -293,6 +299,7 @@ class GoalTrackingPage(ctk.CTk):
 
         self.refresh_queue()
         self.refresh_tasks()
+
 
     def execute_next_goal(self):
 
@@ -349,6 +356,7 @@ class GoalTrackingPage(ctk.CTk):
             parent=self,
         )
 
+
     def clear_queue(self):
 
         if not self.goal_queue:
@@ -377,7 +385,6 @@ class GoalTrackingPage(ctk.CTk):
             self.refresh_all()
 
    
-
     def calculate_streak(self):
 
         if not self.completion_dates:
@@ -418,7 +425,6 @@ class GoalTrackingPage(ctk.CTk):
         return streak
 
    
-
     def build_ui(self):
 
         self.grid_columnconfigure(
@@ -466,8 +472,9 @@ class GoalTrackingPage(ctk.CTk):
 
         self.build_bottom()
 
-   
+        self.create_sidebar()
 
+   
     def build_navbar(self):
 
         self.create_left_navbar()
@@ -709,6 +716,212 @@ class GoalTrackingPage(ctk.CTk):
     def open_resources(self):
         print("Resources selected")
 
+    def create_sidebar(self):
+        self.sidebar_open = True
+        self.sidebar = ctk.CTkFrame(
+            self,
+            width=90,
+            fg_color=SIDEBAR,
+            corner_radius=0
+        )
+        self.sidebar.place(
+            relx=1,
+            rely=0,
+            anchor="ne"
+        )
+
+        self.sidebar.pack_propagate(False)
+
+        self.sidebar_toggle = ctk.CTkButton(
+            self.sidebar,
+            text=">",
+            width=55,
+            height=40,
+            fg_color="transparent",
+            hover_color="#333333",
+            text_color=WHITE,
+            font=("Arial", 22),
+            corner_radius=0,
+            command=self.toggle_sidebar
+        )
+
+        self.sidebar_toggle.pack(
+            pady=(15, 20)
+        )
+    
+        logo = ctk.CTkLabel(
+            self.sidebar,
+            text="C",
+            font=("Arial", 32, "bold"),
+            text_color=WHITE
+        )
+
+        logo.pack(
+            pady=(0, 35)
+        )
+
+        home_button = ctk.CTkButton(
+            self.sidebar,
+            text="⌂",
+            width=55,
+            height=50,
+            fg_color="transparent",
+            hover_color="#333333",
+            text_color=WHITE,
+            font=("Arial", 28),
+            command=self.go_home
+        )
+
+        home_button.pack(
+            pady=10
+        )
+
+        profile_button = ctk.CTkButton(
+            self.sidebar,
+            text="◉",
+            width=55,
+            height=50,
+            fg_color="transparent",
+            hover_color="#333333",
+            text_color=WHITE,
+            font=("Arial", 24),
+            command=self.open_profile
+        )
+
+        profile_button.pack(
+            pady=10
+        )
+
+        spacer = ctk.CTkFrame(
+            self.sidebar,
+            fg_color="transparent"
+        )
+
+        spacer.pack(
+            expand=True,
+            fill="both"
+        )
+
+        self.after(
+            100,
+            self.set_sidebar_height
+        )
+
+    def go_home(self):
+        self.close_dropdowns()
+        print("Navigating to Home Page")
+
+    def open_profile(self):
+        self.close_dropdowns()
+        print("Navigating to Profile Page")
+    
+    def logout(self):
+        self.close_dropdowns()
+        print("Logging out...")
+
+
+    def set_sidebar_height(self):
+
+        height = self.winfo_height()
+
+        if height > 1:
+
+            self.sidebar.configure(
+                height=height
+            )
+
+
+    def toggle_sidebar(self):
+
+        if self.sidebar_open:
+
+            self.animate_sidebar_close()
+
+        else:
+
+            self.animate_sidebar_open()
+
+
+    def animate_sidebar_open(self, height=0):
+
+        max_height = self.winfo_height()
+
+        if max_height <= 1:
+
+            self.after(
+                50,
+                lambda: self.animate_sidebar_open(height)
+            )
+
+            return
+
+        if height < max_height:
+
+            height += 25
+
+            if height > max_height:
+                height = max_height
+
+            self.sidebar.configure(
+                height=height,
+                width=90
+            )
+
+            self.after(
+                10,
+                lambda: self.animate_sidebar_open(height)
+            )
+
+        else:
+
+            self.sidebar_open = True
+
+            self.sidebar_toggle.configure(
+                text=">"
+            )
+
+
+    def animate_sidebar_close(self, height=None):
+
+        max_height = self.winfo_height()
+
+        if max_height <= 1:
+            return
+
+        if height is None:
+            height = max_height
+
+        if height > 0:
+
+            height -= 25
+
+            if height < 0:
+                height = 0
+
+            self.sidebar.configure(
+                height=height,
+                width=90
+            )
+
+            self.after(
+                10,
+                lambda: self.animate_sidebar_close(height)
+            )
+
+        else:
+
+            self.sidebar.configure(
+                width=90,
+                height=1
+            )
+
+            self.sidebar_open = False
+
+            self.sidebar_toggle.configure(
+                text="<"
+            )    
+
+
     def build_header(self):
 
         self.header = ctk.CTkFrame(
@@ -770,6 +983,7 @@ class GoalTrackingPage(ctk.CTk):
             row=0,
             column=2
         )
+
 
     def build_summary(self):
 
@@ -941,7 +1155,6 @@ class GoalTrackingPage(ctk.CTk):
         )
 
    
-
     def build_bottom(self):
 
         bottom = ctk.CTkFrame(
@@ -981,7 +1194,6 @@ class GoalTrackingPage(ctk.CTk):
         )
 
    
-
     def build_todo(self, parent):
 
         panel = ctk.CTkFrame(
@@ -1129,7 +1341,6 @@ class GoalTrackingPage(ctk.CTk):
         )
 
    
-
     def build_schedule(self, parent):
 
         panel = ctk.CTkFrame(
@@ -1254,7 +1465,6 @@ class GoalTrackingPage(ctk.CTk):
         )
 
    
-
     def draw_schedule(self):
 
         for child in self.schedule_frame.winfo_children():
@@ -1397,6 +1607,7 @@ class GoalTrackingPage(ctk.CTk):
                             )
                         )
 
+
     def task_matches_day(
         self,
         task,
@@ -1419,6 +1630,7 @@ class GoalTrackingPage(ctk.CTk):
 
             return False
 
+
     def short_task_name(
         self,
         name
@@ -1430,7 +1642,6 @@ class GoalTrackingPage(ctk.CTk):
         return name[:14] + "..."
 
    
-
     def refresh_tasks(self):
 
         for child in (
@@ -1464,6 +1675,7 @@ class GoalTrackingPage(ctk.CTk):
                 task,
                 row
             )
+
 
     def make_task_row(
         self,
@@ -1614,7 +1826,6 @@ class GoalTrackingPage(ctk.CTk):
         )
 
    
-
     def refresh_queue(self):
 
         queue_ids = list(
@@ -1632,7 +1843,6 @@ class GoalTrackingPage(ctk.CTk):
         )
 
    
-
     def toggle_task(
         self,
         task_id
@@ -1694,6 +1904,7 @@ class GoalTrackingPage(ctk.CTk):
 
         self.refresh_all()
 
+
     def delete_task(
         self,
         task_id
@@ -1735,7 +1946,6 @@ class GoalTrackingPage(ctk.CTk):
         self.refresh_all()
 
    
-
     def open_task_popup(
         self,
         task_id=None,
@@ -2069,6 +2279,7 @@ class GoalTrackingPage(ctk.CTk):
 
         self.task_entry.focus_set()
 
+
     def set_popup_deadline(
         self,
         iso_value
@@ -2089,9 +2300,11 @@ class GoalTrackingPage(ctk.CTk):
             d
         )
 
+
     def get_popup_deadline(self):
 
         return self.popup_deadline.get_date().isoformat()
+
 
     def save_task_popup(
         self,
@@ -2188,6 +2401,7 @@ class GoalTrackingPage(ctk.CTk):
 
         self.refresh_all()
 
+
     def close_task_popup(self):
 
         if hasattr(
@@ -2208,7 +2422,6 @@ class GoalTrackingPage(ctk.CTk):
                 pass
 
    
-
     def draw_pie(self):
 
         c = self.pie_canvas
@@ -2326,7 +2539,6 @@ class GoalTrackingPage(ctk.CTk):
         )
 
    
-
     def draw_bars(self):
 
         c = self.bar_canvas
@@ -2473,7 +2685,6 @@ class GoalTrackingPage(ctk.CTk):
             )
 
    
-
     def refresh_all(self):
 
         self.refresh_tasks()
