@@ -592,3 +592,19 @@ class Mood(ctk.CTk):
             self.sidebar_toggle.configure(
                 text="<"
             )    
+
+
+    def build_bottom(self):
+        bottom = ctk.CTkFrame(self.main, fg_color = 'transparent')
+        bottom.grid(row=2,column = 0, padx = 16, pady = (0,14), columnspan = 3, sticky = 'nsew')
+        bottom.grid_columnconfigure(0, weight = 2)
+        bottom.grid_columnconfigure(1, weight = 2)
+        bottom.grid_rowconfigure(0, weight = 1)
+        chart = ctk.CTkFrame(bottom, fg_color = PANEL)
+        chart.grid(row = 0, column = 0, padx = (0,6), sticky = 'nsew')
+        trend_label = ctk.CTkLabel(chart, text = "MOOD TREND (LAST 2 WEEKS)", font = ("Arial", 12, 'bold'), text_color = DARK)
+        trend_label.pack(anchor = 'nw', padx = 10, pady = (8,0))
+        self.caption = ctk.CTkLabel(chart, text = '', font = ("Arial", 10))
+        self.caption.pack(anchor = 'nw', padx = 12)
+        self.chart_canvas = tk.Canvas(chart, bg = PANEL)
+        self.chart_canvas.pack()
