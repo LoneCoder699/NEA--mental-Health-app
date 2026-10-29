@@ -30,6 +30,7 @@ MOODS = {
 }
 
 class Mood(ctk.CTk):
+
     def __init__(self):
         ctk.set_appearance_mode("light")
         ctk.set_default_color_theme("blue")
@@ -50,6 +51,7 @@ class Mood(ctk.CTk):
         self.refresh_all()
         self.bind('<Return>', lambda e: self.save_data())
 
+
     def load_data(self):
         if not DATA_FILE.exists():
             return
@@ -63,12 +65,326 @@ class Mood(ctk.CTk):
         except Exception:
             self.entries = {}
 
+
     def save_data(self):
         try:
             DATA_FILE.write_text(json.dumps({'entries':self.entries},indent = True),encoding='utf-8')
         except Exception as e:
             messagebox.showerror("Save Error",str(e),parent = self)
 
+
     def create_streak(self):
         d = date.today()
+        if d.isoformat() not in self.entries:
+            d -= timedelta(days = 1)
+        n = 0
+        while d.isoformat() in self.entries:
+            n+=1
+            d-=timedelta(days = 1)
+        return n
 
+
+    def build_ui(self):
+        self.grid_columnconfigure(0,weight=0)
+        self.grid_columnconfigure(1,weight=1)
+        self.grid_rowconfigure(0,weight=1)
+        self.build_navbar()
+        self.main = ctk.CTkFrame(self,fg_color = BG)
+        self.main.grid(row = 0, column = 1, sticky = 'nsew')
+        self.main.grid_columnconfigure(0,weight=1)
+        self.main.grid_columnconfigure(1,weight=0)
+        self.main.grid_columnconfigure(2,weight=0)
+        self.main.grid_rowconfigure(0,weight=1)
+        self.mood_label = ctk.CTkLabel(self.main,text = 'HOW IS YOUR MOOD?', font = ("Arial", 25), text_color = DARK)
+        self.mood_label.grid(row = 0, column = 0, columnspan = 2, pady = (8,0))
+        self.build_mood_card()
+        self.build_streak()
+        self.build_icons()
+        self.build_bottom()
+
+
+    def build_navbar(self):
+
+        self.create_left_navbar()
+
+    def create_left_navbar(self):
+
+        self.left_nav_expanded = True
+
+        self.left_nav_width = 260
+
+        self.left_nav_collapsed_width = 65
+
+        self.left_navbar = ctk.CTkFrame(
+            self,
+            width=self.left_nav_width,
+            fg_color=GRAY,
+            corner_radius=0,
+        )
+
+        self.left_navbar.grid(
+            row=0,
+            column=0,
+            sticky="ns"
+        )
+
+        self.left_navbar.grid_propagate(
+            False
+        )
+
+        self.left_nav_top = ctk.CTkFrame(
+            self.left_navbar,
+            height=100,
+            fg_color="transparent",
+        )
+
+        self.left_nav_top.pack(
+            fill="x",
+            padx=5,
+            pady=(10, 20)
+        )
+
+        self.left_nav_top.pack_propagate(
+            False
+        )
+
+        self.left_logo = ctk.CTkLabel(
+            self.left_nav_top,
+            text="Logo",
+            width=160,
+            height=70,
+            fg_color=SIDEBAR,
+            text_color=WHITE,
+            font=("Arial", 13),
+            corner_radius=0,
+        )
+
+        self.left_logo.pack(
+            side="left",
+            fill="both",
+            expand=True,
+            padx=(0, 10)
+        )
+
+        self.left_toggle = ctk.CTkButton(
+            self.left_nav_top,
+            text="<",
+            width=45,
+            height=70,
+            fg_color=SIDEBAR,
+            hover_color="#333333",
+            text_color=WHITE,
+            font=("Arial", 24),
+            corner_radius=0,
+            command=self.toggle_left_navbar,
+        )
+
+        self.left_toggle.pack(
+            side="right"
+        )
+
+        self.left_menu_frame = ctk.CTkFrame(
+            self.left_navbar,
+            fg_color="transparent"
+        )
+
+        self.left_menu_frame.pack(
+            fill="both",
+            expand=True,
+            padx=3
+        )
+
+        self.left_nav_buttons = []
+
+        menu_items = [
+
+            (
+                "Mental health survey",
+                self.open_mental_health_survey
+            ),
+
+            (
+                "AI ChatBot",
+                self.open_ai_chatbot
+            ),
+
+            (
+                "Appointment Booking",
+                self.open_appointment_booking
+            ),
+
+            (
+                "Journaling",
+                self.open_journaling
+            ),
+
+            (
+                "Mood Tracking",
+                self.open_mood_tracking
+            ),
+
+            (
+                "Goal Tracking",
+                self.open_goal_tracking
+            ),
+
+            (
+                "News/ Blogs",
+                self.open_news_blogs
+            ),
+
+            (
+                "Resources",
+                self.open_resources
+            ),
+        ]
+
+        for text, command in menu_items:
+
+            separator = ctk.CTkFrame(
+                self.left_menu_frame,
+                height=10,
+                fg_color=GRAY,
+                corner_radius=0,
+            )
+
+            separator.pack(
+                fill="x"
+            )
+
+            button = ctk.CTkButton(
+                self.left_menu_frame,
+                text=text,
+                height=48,
+                fg_color=SIDEBAR,
+                hover_color="#333333",
+                text_color="#D0D0D0",
+                font=("Arial", 14),
+                corner_radius=0,
+                anchor="center",
+                command=command,
+            )
+
+            button.pack(
+                fill="x"
+            )
+
+            self.left_nav_buttons.append(
+                (button, text)
+            )
+
+    def toggle_left_navbar(self):
+
+        if self.left_nav_expanded:
+
+            self.left_navbar.configure(
+                width=self.left_nav_collapsed_width
+            )
+
+            self.left_logo.pack_forget()
+
+            self.left_toggle.configure(
+                text=">"
+            )
+
+            for button, text in self.left_nav_buttons:
+
+                button.configure(
+                    text=""
+                )
+
+            self.left_nav_expanded = False
+
+        else:
+
+            self.left_navbar.configure(
+                width=self.left_nav_width
+            )
+
+            self.left_logo.pack(
+                side="left",
+                fill="both",
+                expand=True,
+                padx=(0, 10)
+            )
+
+            self.left_toggle.configure(
+                text="<"
+            )
+
+            for button, text in self.left_nav_buttons:
+
+                button.configure(
+                    text=text
+                )
+
+            self.left_nav_expanded = True
+
+    def open_mental_health_survey(self):
+        print("Mental Health Survey selected")
+
+    def open_ai_chatbot(self):
+        print("AI ChatBot selected")
+
+    def open_appointment_booking(self):
+        print("Appointment Booking selected")
+
+    def open_journaling(self):
+        print("Journaling selected")
+
+    def open_mood_tracking(self):
+        print("Mood Tracking selected")
+
+    def open_goal_tracking(self):
+        print("Goal Tracking selected")
+
+    def open_news_blogs(self):
+        print("News / Blogs selected")
+
+    def open_resources(self):
+        print("Resources selected")
+
+    def build_mood_card(self):
+        card = ctk.CTkFrame(self.main, fg_color = PANEL)
+        card.grid(row = 1, column = 0, padx = (16,6), pady = 8, sticky = 'nsew')
+        self.face_canvas = tk.Canvas(card,wdith = 100, height = 100, bg = PANEL)
+        self.face_canvas.pack(pady = (10,0))
+        self.feeling_label = ctk.CTkLabel(card,text="I am feeling ___", font = ("Arial",24), text_color = DARK)
+        self.feeling_label.pack(pady = (0,5))
+        self.panel = ctk.CTkFrame(card, fg_color = DARK)
+        self.panel.pack(fill = 'x', padx = 12)
+        self.row = ctk.CTkFrame(self.panel,fg_color = 'transparent')
+        self.row.pack(fill = 'x',padx = 12, pady = (10,4))
+        self.row.grid_columnconfigure(tuple(range(5)),weight = 1)
+        for i,value in enumerate(MOODS):
+            iv = tk.Canvas(self.row,width = 70, height = 40,bg = GRAY)
+            iv.grid(row = 0, column = 1, padx = 5)
+            iv.bind('<Button-1>',lambda e, v = value: self.select_mood(v))
+            self.mood_buttons[value] = iv
+        note_row = ctk.CTkFrame(self.panel, fg_color = 'transparent')
+        note_row.pack(fill = 'x', padx = 14, pady = (0,10))
+        note_row.grid_columnconfigure(1,weight = 1)
+        self.note_label = ctk.CTkLabel(note_row, text = 'Short Note:', text_color = WHITE, font = ("Arial", 12))
+        self.note_label.grid(row = 0, column = 0, padx = (0,8))
+        self.note_entry = ctk.CTkEntry(note_row , height = 30, corner_radius = 2, fg_color = BLACK, text_color = WHITE, placeholder_text = "What's on your mind? (optional)", placeholder_text_color= GRAY)
+        self.note_entry.grid(row = 0, column = 1)
+        self.note_entry.bind('<Return>', lambda e: self.submit_mood())
+        self.continue_button = ctk.CTkButton(card, text = 'Continue →', width = 200, height = 30, corner_radius = 15, fg_color = BLACK, hover_color = GRAY, text_color = WHITE, font = ("Arial", 12), command = self.submit_mood)
+        self.continue_button.pack(pady =(10,2))
+        self.status_label = ctk.CTkLabel(card, text = '', font = ("Arial", 10), text_color = GRAY)
+        self.status_label.pack(pady = (0,6))
+
+
+    def build_streak(self):
+        streak_frame = ctk.CTkFrame(self.main, fg_color = PANEL, width = 100)
+        streak_frame.grid(row =1, column = 1, padx = 6, pady = 8, sticky = 'nsew')
+        streak_frame.grid_propagate(False)
+        streak_frame.pack_propagate(False)
+        streak_label = ctk.CTkLabel(streak_frame, text = 'Streak', font = ("Arial", 12), text_color = DARK)
+        streak_label.pack(pady = (10,0))
+        days_label = ctk.CTkLabel(streak_frame, text = 'Day', font = ("Arial", 20), text_color = DARK)
+        days_label.pack()
+        no_label = ctk.CTkLabel(streak_frame, text = '0', font = ("Arial", 22), text_color = DARK)
+        no_label.pack()
+        flame = tk.Canvas(streak_frame, width = 45, height = 48, bg = PANEL)
+        flame.pack(pady = (4,0))
