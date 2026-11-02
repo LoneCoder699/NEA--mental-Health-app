@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 from collections import deque
 from tkcalendar import DateEntry
+import sys
 
 DATA_FILE = Path.home() / "goal_tracking_data.json"
 
@@ -28,6 +29,14 @@ MOODS = {
     4: {"emoji": "😁", "name": "Good",  "color": "#999999"},
     5: {"emoji": "🤩", "name": "Amazing", "color": "#bdbdbd"},
 }
+
+if sys.platform.startswith("win"):
+    EMOJI_FONT = "Segoe UI Emoji"
+
+elif sys.platform == "darwin":
+    EMOJI_FONT = "Apple Color Emoji"
+else:
+    EMOJI_FONT = "Noto Color Emoji"
 
 class Mood(ctk.CTk):
 
@@ -607,4 +616,25 @@ class Mood(ctk.CTk):
         self.caption = ctk.CTkLabel(chart, text = '', font = ("Arial", 10))
         self.caption.pack(anchor = 'nw', padx = 12)
         self.chart_canvas = tk.Canvas(chart, bg = PANEL)
-        self.chart_canvas.pack()
+        self.chart_canvas.pack(fill = 'both', expand = True, padx = 8, pady = (2,8))
+        self.chart_canvas.bind('<Configure>', lambda e: self.draw_chart())
+        self.chart_canvas.bind('<Motion>', self.hover_chart)
+        self.chart_canvas.bind('<Leave>', lambda e: self.reset_caption())
+        donut = ctk.CTkFrame(bottom, fg_color = PANEL)
+        donut.grid(row = 0, column = 1, padx = (6,0), sticky = 'nsew')
+        donut_label = ctk.CTkLabel(donut, text = 'MOOD BREAKDOWN (Last 30 days)', font= ('Arial', 10, 'bold'), text_color = DARK)
+        donut_label.pack(anchow = 'nw', padx = 12, pady = (9,0))
+        self.donut_canvas = tk.Canvas(donut, bg= PANEL)
+        self.donut_canvas.pack(expand = True, fill = 'both', padx = 8, pady = 8)
+        self.donut_canvas.bind('<Configure>', lambda e: self.draw_donut())
+
+
+    def select_mood(self, mood):
+        self.selected_mood = mood
+        for value,cv in self.mood_buttons.items():
+            cv.delete('all')
+            cv.configure(bg = WHITE if value == mood else GRAY)
+            cv.create_text(36,20, text = MOODS[value]['emoji'], font = (EMOJI_FONT,-25))
+            self.feeling_label.configure(text = f'I am feeling {MOODS[mood]['name']}' else 'I am feeling _____')
+            self.face_canvas.delete('all')
+            self.face_canvas.create_text(50,50, text = )
