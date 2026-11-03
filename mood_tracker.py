@@ -637,4 +637,45 @@ class Mood(ctk.CTk):
             cv.create_text(36,20, text = MOODS[value]['emoji'], font = (EMOJI_FONT,-25))
             self.feeling_label.configure(text = f'I am feeling {MOODS[mood]['name']}' else 'I am feeling _____')
             self.face_canvas.delete('all')
-            self.face_canvas.create_text(50,50, text = )
+            self.face_canvas.create_text(50,50, text = MOODS[mood or 3]['emoji'], font = (EMOJI_FONT,-75))
+
+
+    def restore_today(self):
+        entry = self.entries.get(date.today().isoformat())
+        self.select_mood(entry['mood'] if entry else None)
+        self.note_entry.delete(0,'n')
+        if entry and entry['note']:
+            self.note_entry.insert(0,entry['note'])
+
+
+    def submit_mood(self):
+        if self.selected_mood is None:
+            messagebox.showwarning('pick a mood', 'please choose the mood according to how you are feeling first', parent = self)
+
+        self.entries[date.today().isoformat()] = {'mood':self.selected_mood,'note':self.note_entry.get().strip(), 'time':datetime.now().strftime('%H:%M')}
+        self.save_data()
+        self.refresh_all()
+        self.status_label.configure(text = f"saved:{MOODS[self.selected_mood]['name']}. Streak Day {self.current_streak()}")
+        self.after(4000,lambda:self.status_label.configure(text = ''))
+
+
+    def open_history(self):
+        if self.history_popup is not None and self.history_popup.winfo_exists():
+            self.history_popup.lift()
+            return
+        win = ctk.CTkToplevel(self)
+        self.histroy_popup = win
+        win.title('mood history')
+        win.geometry('460x520')
+        win.configure(fg_color = PANEL)
+        win.transient(self)
+        history_label = ctk.CTkLabel(win, text = 'mood history', font = {'Arial', 16, 'bold'})
+        history_label.pack(anchor = 'w', padx = 20, pady = 12)
+        scroll_frame = ctk.CTkScrollableFrame(win, bg = 'white')
+        scroll_frame.pack(fill = 'both', expand = True, padx = 12, pady = (0,12))
+        scroll_frame.grid_columnconfigure(0, weight = 1)
+        id = sorted(self.entries,reverse = True)
+        if not id:
+            no_mood_label = ctk.CTkLabel(scroll_frame, text = 'No Mood Entries Yet', text_color = GRAY)
+            no_mood_label.grid(row = 0, column = 0, pady = 20)
+            return
