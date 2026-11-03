@@ -679,3 +679,38 @@ class Mood(ctk.CTk):
             no_mood_label = ctk.CTkLabel(scroll_frame, text = 'No Mood Entries Yet', text_color = GRAY)
             no_mood_label.grid(row = 0, column = 0, pady = 20)
             return
+
+        for r,key in enumerate(id):
+            e = self.entries[key]
+            d = datetime.strptime(key, "%Y-%m-%d").strftime('%a,%d %b %Y')
+            row = ctk.CTkFrame(scroll_frame, fg_color = DARK)
+            row.grid(row = r, padx = 4, pady = 2, sticky = 'ew')
+            row.grid_columnconfigure(1, weight = 1)
+            face = tk.Canvas(row, width = 30, height = 30, bg = DARK)
+            face.grid(row = 0, column = 0, rowspan = 2, padx = 8, pady = 6)
+            face.create_text(17,17,text = MOODS[e['mood']]['emoji'], font = (EMOJI_FONT,-25))
+            mood_one_label = ctk.CTkLabel(row, text = f"{d}.{MOODS[e['mood']]['name']}", text_color = WHITE, font = ("Arial", 12, 'bold'), anchor = 'w')
+            mood_one_label.grid(row = 0, column = 1, sticky = 'ew')
+            note_one_label = ctk.CTkLabel(row,text = e['note'] or '___', text_color = GRAY, font = ("Arial", 11), anchor = 'w', wraplength = 350,justify = 'left')
+            note_one_label.grid(row =1, column = 1, sticky = 'ew', pady = (0,6))
+
+
+    def open_settings(self):
+        if self.settings_popup is not None and self.settings_popup.winfo_exists():
+            self.settings_popup.lift()
+            return
+        win = ctk.CTkToplevel(self)
+        self.settings_popup = win
+        win.title('Settings')
+        win.geometry('320x230')
+        win.resizeable(False, False)
+        win.configure(fg_color = PANEL)
+        win.transient(self)
+        mood_settings_label = ctk.CTkLabel(win,text = 'Mood settings', font = ('Arial', 16, 'bold'), text_color = DARK)
+        mood_settings_label.pack(anchor = 'west', padx = 18, pady = 12, text_color = DARK)
+        export_button = ctk.CTkButton(win,text = 'Export History', height = 40, corner_radius = 2, fg_color = DARK, text_color = WHITE, hover_color = GRAY, command = self.export)
+        export_button.pack(fill = 'x', padx = 18, pady = 4)
+        clearall_button = ctk.CTkButton(win,text = 'Clear All History', height = 40, corner_radius = 2, fg_color = DARK, text_color = WHITE, hover_color = GRAY, command = self.clearall)
+        clearall_button.pack(fill = 'x', padx = 18, pady = 4) 
+        close_button = ctk.CTkButton(win,text = 'Close History', height = 40, corner_radius = 2, fg_color = DARK, text_color = WHITE, hover_color = GRAY, command = self.close)
+        close_button.pack(fill = 'x', padx = 18, pady = 4)
