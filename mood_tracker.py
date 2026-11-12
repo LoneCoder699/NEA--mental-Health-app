@@ -7,6 +7,7 @@ from pathlib import Path
 from collections import deque
 from tkcalendar import DateEntry
 import sys
+import csv
 
 DATA_FILE = Path.home() / "goal_tracking_data.json"
 
@@ -714,3 +715,55 @@ class Mood(ctk.CTk):
         clearall_button.pack(fill = 'x', padx = 18, pady = 4) 
         close_button = ctk.CTkButton(win,text = 'Close History', height = 40, corner_radius = 2, fg_color = DARK, text_color = WHITE, hover_color = GRAY, command = self.close)
         close_button.pack(fill = 'x', padx = 18, pady = 4)
+    
+
+    def export(self):
+        try:
+            with open(EXPORT_FILE,"w",encoding = 'utf8') as f:
+                w = csv.writer(f)
+                w.writerow(['date','time','mood_score','mood','note'])
+                for key in sorted(self.entries):
+                    e = self.entries[key]
+                    w.writerow([key,e['time'],e['mood'],MOODS[e['mood']]['name'],e['note']])
+            messagebox.showinfo('exported',f'Saved to- \n{EXPORT_FILE}',parent = self.settings_popup)
+
+        except Exception as e:
+            messagebox.showerror('Export Error', str(e), parent = self.settings_popup)
+
+
+    def clear_all(self):
+        if not self.entries:
+            messagebox.showinfo('No entries', 'History is already empty', parent = self.settings_popup)
+            return
+        if messagebox.askyesno('clear history', 'Delete all mood entries? This cannot be undone', parent = self.settings_popup)
+        self.entries = {}
+        self.save_data()
+        self.restore_today()
+        self.refresh_all()
+
+
+    def reset_caption(self):
+        self.trend_caption.configure(text = 'Scale: 1 = Awful, 5 = Great. Hover a point for details')
+
+
+    def draw_chart(self):
+        c = self.chart_canvas
+        c.delete('all')
+        self.chart_points = []
+        w = max(c.winfo_width(),300)
+        h = max(c.winfo_height(), 110)
+        left, right, top, bottom = 28,14,10,22
+        cw,ch = w-left-right, max(20,h-top-bottom)
+
+        def X(i):
+            return left+cw*i/13
+        
+        def Y(j):
+            return top+ch-(j-1)/4*ch
+        
+        for j in range(1,6):
+            c.create_line(left,Y(j),w-right,Y(j),fill = GRID if m in (1,5) else "#c4c4c4")
+            c.create_text(left-10,Y(j), text = str(j), fill = GRAY, font = ("Arial", 8))
+        
+        days = [date.today()-timedelta(days = 13-i) for i in range(14)]
+        pts = []
