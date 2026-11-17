@@ -28,6 +28,7 @@ class Select_Doctor_Page(ctk.CTk):
         self.minsize(820,560)
         self.columnconfigure(1,weight = 1)
         self.rowconfigure(0, weight = 1)
+        self.images = []
         self.create_left_navbar()
         self.build_ui()
 
@@ -304,6 +305,36 @@ class Select_Doctor_Page(ctk.CTk):
         image_box.grid_propagate(False)
         image_box.pack_propagate(False)
         image = None
-        path = os.path.join()
+        path = os.path.join(os.path.dirname(os.path.abspath(__file__)),doctor['image'])
+        if Image and os.path.exists(path):
+            try:
+                image = ctk.CTkImage(Image.open(path),size = (115,110))
+                self.images.append(image)
+            except Exception:
+                image = None
+
+            if image:
+                image_label = ctk.CTkLabel(image_box,image=image, text='')
+                image_label.pack(fill = 'both', expand = True)
+            else:
+                image_label = ctk.CTkLabel(image_box, text='image', text_color = BLACK, font = ("Arial",20))
+                image_label.pack(expand = True)
+
+            info = ctk.CTkFrame(card,height = 110, fg_color = LIGHT_GRAY)
+            info.grid(row=0,column =1, sticky ='ew')
+            info.pack_propagate(False)
+            for text in (doc['name'],doc['info'],doc['rating']):
+                allinfo_label = ctk.CTkLabel(info,text = text, font = ("Arial", 14), text_color = 'black', anchor = 'w')
+                allinfo_label.pack(fill = 'x', padx = 15)
+
+            book_button = ctk.CTkButton(info, text = "BOOK NOW", width = 160, height = 30, fg_color = BLACK, hover_color=HOVER, text_color = WHITE, font = ("Arial", 14), command = lambda: self.book(doc))
+            book_button.pack(anchor = 'w', padx = 15, pady = (4,0))
+
+    def book(self,doc):
+        messagebox.showinfo('all info', f'Doctor: {doc['name']}')
+
+if __name__ == '__main__':
+    Select_Doctor_Page().mainloop()
+                
 
 
