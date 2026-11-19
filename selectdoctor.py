@@ -1,5 +1,7 @@
 import customtkinter as ctk
 import os
+import tkinter as tk
+from tkinter import messagebox
 try:
     from PIL import Image
 except ImportError:
@@ -13,6 +15,9 @@ WHITE = "#ffffff"
 GRAY = "#777777"
 LIGHT_GRAY = "#eeeeee"
 HOVER = "#333333"
+BG = "#f5f5f5"
+PANEL = "#dedede"
+SIDEBAR = "#1E1E1E"
 
 DOCTORS= [{'name':'Dr.Bob','info':'MBBS, 10 years exp','rating':'4.67/5', 'image':'doc1.jpeg'},
           {'name':'Dr.Bill','info':'MBBS, 6.7 years exp','rating':'3.8/5', 'image':'doc2.jpeg'},
@@ -53,7 +58,7 @@ class Select_Doctor_Page(ctk.CTk):
             sticky="ns"
         )
 
-        self.left_navbar.grid_propagate(
+        self.left_navbar.pack_propagate(
             False
         )
 
@@ -199,15 +204,12 @@ class Select_Doctor_Page(ctk.CTk):
             )
 
     def go_home(self):
-        self.close_dropdowns()
         print("Navigating to Home Page")
 
     def open_profile(self):
-        self.close_dropdowns()
         print("Navigating to Profile Page")
     
     def logout(self):
-        self.close_dropdowns()
         print("Logging out...")
 
     def toggle_left_navbar(self):
@@ -296,45 +298,43 @@ class Select_Doctor_Page(ctk.CTk):
         for i,doc in enumerate(DOCTORS):
             self.doc_card(scroll,doc,i)
 
-    def doc_card(self,parent,doc,row):
-        card = ctk.CTkFrame(parent,fg_color = 'transparent')
-        card.grid(row = row, column = 0, sticky = 'ew', padx = 40, pady = (0,25))
-        card.columnconfigure(1, weight = 1)
-        image_box = ctk.CTkFrame(card,width = 115, height = 110, fg_color = LIGHT_GRAY)
-        image_box.grid(row= 0, column = 0, padx = (0,45), sticky = 'n')
+    def doc_card(self, parent, doc, row):
+        card = ctk.CTkFrame(parent, fg_color='transparent')
+        card.grid(row=row, column=0, sticky='ew', padx=40, pady=(0, 25))
+        card.columnconfigure(1, weight=1)
+
+        image_box = ctk.CTkFrame(card, width=115, height=110, fg_color=LIGHT_GRAY)
+        image_box.grid(row=0, column=0, padx=(0, 45), sticky='n')
         image_box.grid_propagate(False)
         image_box.pack_propagate(False)
+
         image = None
-        path = os.path.join(os.path.dirname(os.path.abspath(__file__)),doctor['image'])
+        path = os.path.join(os.path.dirname(os.path.abspath(__file__)), doc['image'])
         if Image and os.path.exists(path):
             try:
-                image = ctk.CTkImage(Image.open(path),size = (115,110))
+                image = ctk.CTkImage(Image.open(path), size=(115, 110))
                 self.images.append(image)
             except Exception:
                 image = None
 
-            if image:
-                image_label = ctk.CTkLabel(image_box,image=image, text='')
-                image_label.pack(fill = 'both', expand = True)
-            else:
-                image_label = ctk.CTkLabel(image_box, text='image', text_color = BLACK, font = ("Arial",20))
-                image_label.pack(expand = True)
+        if image:
+            ctk.CTkLabel(image_box, image=image, text='').pack(fill='both', expand=True)
+        else:
+            ctk.CTkLabel(image_box, text='Image', text_color=BLACK, font=("Arial", 20)).pack(expand=True)
 
-            info = ctk.CTkFrame(card,height = 110, fg_color = LIGHT_GRAY)
-            info.grid(row=0,column =1, sticky ='ew')
-            info.pack_propagate(False)
-            for text in (doc['name'],doc['info'],doc['rating']):
-                allinfo_label = ctk.CTkLabel(info,text = text, font = ("Arial", 14), text_color = 'black', anchor = 'w')
-                allinfo_label.pack(fill = 'x', padx = 15)
+        info = ctk.CTkFrame(card, height=110, fg_color=LIGHT_GRAY)
+        info.grid(row=0, column=1, sticky='ew')
+        info.pack_propagate(False)
+        for text in (doc['name'], doc['info'], doc['rating']):
+            ctk.CTkLabel(info, text=text, font=("Arial", 14), text_color='black',
+                         anchor='w').pack(fill='x', padx=15)
 
-            book_button = ctk.CTkButton(info, text = "BOOK NOW", width = 160, height = 30, fg_color = BLACK, hover_color=HOVER, text_color = WHITE, font = ("Arial", 14), command = lambda: self.book(doc))
-            book_button.pack(anchor = 'w', padx = 15, pady = (4,0))
+        ctk.CTkButton(info, text="BOOK NOW", width=160, height=30, fg_color=BLACK,
+                      hover_color=HOVER, text_color=WHITE, font=("Arial", 14),
+                      command=lambda: self.book(doc)).pack(anchor='w', padx=15, pady=(4, 0))
 
     def book(self,doc):
-        messagebox.showinfo('all info', f'Doctor: {doc['name']}')
+        messagebox.showinfo('Book appointment', f"Doctor: {doc['name']}")
 
 if __name__ == '__main__':
     Select_Doctor_Page().mainloop()
-                
-
-
